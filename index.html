@@ -6,9 +6,10 @@
 		<script>
 		var sources = [
 			{ namespace: "chatgpt.com", path: "", qval: "q" },
-			{ namespace: "x.com", path: "i/grok", qval: "text" }
+			{ namespace: "x.com", path: "i/grok", qval: "text" },
+			{ namespace: "google.com", path: "", qval: "q", exparams: {udm:50} }
 		];
-		const q = (o) => Object.keys(o).map(key => encodeURIComponent(key) + '=' + encodeURIComponent(o[key])).join('&');
+		const q = o=>new URLSearchParams(o).toString(); //(o) => Object.keys(o).map(key => encodeURIComponent(key) + '=' + encodeURIComponent(o[key])).join('&');
 		const wparams = (o) => Object.keys(o).map(k=>k+'='+o[k]).join(','); // ....
 		function queue(text)
 		{
@@ -18,7 +19,7 @@
 			var [x,y] = [window.screenLeft,window.screenTop];
 			sources.forEach((s,i)=>{
 				var url = new URL(s.path,'https://'+s.namespace);
-				url.search = new URLSearchParams(q({[s.qval]: text})).toString();
+				url.search = new URLSearchParams(q({[s.qval]: text, ...(s.exparams??{})})).toString();
 				window.open(url,'',wparams({
 					width:side,height:window.innerHeight-(window.outerHeight-window.innerHeight),
 					left:(x+(side*i)),top:y+(window.outerHeight-window.innerHeight)
@@ -46,11 +47,11 @@
 	<body>
 		<div>
 			<img style="margin:auto;display:block;margin-top:60px" src="logo.png" width="300" height="300">
-			<div style="margin:20px auto;text-align:center;width:80%">Aggregate ChatGPT, Grok, and (NOT YET...) DeepSeek.<br>You must have accounts for the corresponding chatbots to use this!</div>
+			<div style="margin:20px auto;text-align:center;width:80%">Aggregate ChatGPT, Grok, Gemini and (NOT YET...) DeepSeek.<br>You must have accounts for the corresponding chatbots to use this!<br>It's also recommended you resize browser to 1920+ width.</div>
 			<div style="margin:auto;display:block;width:80%">
-				<textarea style="margin:auto;display:inline-block;width:calc(100% - 70px);" rows="3" id="inp" onkeydown="keypress(event)"
+				<textarea style="margin:auto;display:inline-block;width:calc(100% - 70px);resize:vertical" rows="3" id="inp" onkeydown="keypress(event)"
 					placeholder="What's the original answer to &quot;Why did the chicken cross the road?&quot;"></textarea><span style="cursor:pointer;user-select:none;">
-				<svg onclick="queue(inp.value)" height="50px" width="50px" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 358.012 358.012" xml:space="preserve">
+				<svg onclick="queue(inp.value);event.target.value='';" height="50px" width="50px" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 358.012 358.012" xml:space="preserve">
 				<g><path style="fill:#010002;" d="M179.006,358.012c98.865,0,179.006-80.141,179.006-179.006S277.871,0,179.006,0S0,80.141,0,179.006
 					S80.141,358.012,179.006,358.012z M84.795,234.54l-8.437-8.437L179,123.455l102.66,102.66l-8.437,8.437L179,140.335L84.795,234.54z"/></g>
 				</svg>

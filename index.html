@@ -1,13 +1,13 @@
 <!DOCTYPE HTML>
 <html>
 	<head>
-		<title>Prismatica</title>
 		<!-- screw paid api, dreams ruined of making this a proper one-window thing at no one's cost besides those god dang billionares -->
-		<script>
+		<title>Prismatica</title><script>
 		var sources = [
-			{ namespace: "chatgpt.com", path: "", qval: "q" },
-			{ namespace: "x.com", path: "i/grok", qval: "text" },
-			{ namespace: "google.com", path: "", qval: "q", exparams: {udm:50} }
+			{ name: "ChatGPT", ns: "chatgpt.com", auto: false, qval: "q" },
+			{ name: "Grok"   , ns: "x.com"      , path: "i/grok", qval: "text" },
+			{ name: "Gemini" , ns: "google.com" , qval: "q", exparams: {udm:50} },
+			{ name: "Claude" , ns: "claude.ai"  , path: "new", auto: false, qval: "q" },
 		];
 		const q = o=>new URLSearchParams(o).toString(); //(o) => Object.keys(o).map(key => encodeURIComponent(key) + '=' + encodeURIComponent(o[key])).join('&');
 		const wparams = (o) => Object.keys(o).map(k=>k+'='+o[k]).join(','); // ....
@@ -15,12 +15,16 @@
 		{
 			if (text.trim().length < 1)
 				return null;
-			var side = window.innerWidth / sources.map(a=>Number(a.enabled??true)).reduce((a,c)=>a+c);
+			var panels = sources.filter(s=>s.enabled??true);
+			var side = window.innerWidth / panels.length;
 			var [x,y] = [window.screenLeft,window.screenTop];
-			sources.forEach((s,i)=>{
-				var url = new URL(s.path,'https://'+s.namespace);
+			panels.forEach((s,i)=>{
+				if (!(s.enabled??true))
+					return;
+				var url = new URL(s.path??"",'https://'+s.ns);
 				url.search = new URLSearchParams(q({[s.qval]: text, ...(s.exparams??{})})).toString();
 				window.open(url,'',wparams({
+					toolbar:'no',location:'no',menubar:'no',scrollbars:'yes',
 					width:side,height:window.innerHeight-(window.outerHeight-window.innerHeight),
 					left:(x+(side*i)),top:y+(window.outerHeight-window.innerHeight)
 				}));
@@ -36,18 +40,29 @@
 				return false;
 			}
 		}
-		</script>
-		<style>
+		</script><style>
 		textarea, body {
 			font-family: Arial, Helvetica;
 			font-size: 19px;
+		}
+		#toggles>span>label {
+			margin: 0px 2px;
+		}
+		#toggles>span {
+			margin: 0px 4px;
+		}
+		#headertext {
+			white-space: pre-line;
 		}
 		</style>
 	</head>
 	<body>
 		<div>
 			<img style="margin:auto;display:block;margin-top:60px" src="logo.png" width="300" height="300">
-			<div style="margin:20px auto;text-align:center;width:80%">Aggregate ChatGPT, Grok, Gemini and (NOT YET...) DeepSeek.<br>You must have accounts for the corresponding chatbots to use this!<br>It's also recommended you resize browser to 1920+ width.</div>
+			<div id="headertext" style="margin:20px auto;text-align:center;width:80%">Aggregate ChatGPT, Grok, Gemini and (NOT YET...) DeepSeek.
+			You must have accounts for the corresponding chatbots to use this!
+			It's recommended to resize your browser to 1920px+ width so full answers aren't condensed, and you need to hit enter again for <span id="nonauto"></span>.</div>
+			<div style="margin:20px auto;text-align:center;width:100%" id="toggles"></div>
 			<div style="margin:auto;display:block;width:80%">
 				<textarea style="margin:auto;display:inline-block;width:calc(100% - 70px);resize:vertical" rows="3" id="inp" onkeydown="keypress(event)"
 					placeholder="What's the original answer to &quot;Why did the chicken cross the road?&quot;"></textarea><span style="cursor:pointer;user-select:none;">
@@ -57,7 +72,23 @@
 				</svg>
 				</span>
 			</div>
-			<script>inp.focus();</script>
+			<script>
+			nonauto.textContent = sources.filter(s=>!(s.auto??true)).map(s=>s.name).join(", ");
+			var test = headertext.textContent;
+			headertext.textContent = "Aggregate "+sources.map(s=>s.name).join(", ")+'. '+test.substring(test.indexOf('\n')+1);
+			var ce = (...a) => document.createElement(...a); // why
+			for (var i = 0; i < sources.length; i++)
+			{
+				var tb = ce("span"), cb = ce("input"), lb = ce("label");
+				lb.setAttribute('for',cb.id = ("c-"+i)), cb.type = "checkbox", cb.checked = sources[i].enabled ?? true;
+				lb.textContent = sources[i].name;
+				cb.onchange = e => (sources[Number(e.target.id.slice(-1))].enabled = e.target.checked);
+				tb.appendChild(cb);
+				tb.appendChild(lb);
+				toggles.appendChild(tb);
+			}
+			inp.focus();
+			</script>
 		</div>
 	</body>
 </html>
